@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Duplicate Checker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+
+        .tabs {
+            display: flex;
+            background: #f5f5f5;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 20px;
+            text-align: center;
+            background: #f5f5f5;
+            cursor: pointer;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s;
+            border: none;
+            font-size: 16px;
+        }
+
+        .tab:hover {
+            background: #ebebeb;
+        }
+
+        .tab.active {
+            background: white;
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 30px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        .input-section label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #333;
+            font-size: 16px;
+        }
+
+        .input-section .helper-text {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 8px;
+            font-weight: normal;
+        }
+
+        textarea {
+            width: 100%;
+            height: 200px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+
+        textarea.small {
+            height: 150px;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        button {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .analyze-btn, .compare-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            flex: 1;
+        }
+
+        .analyze-btn:hover, .compare-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .clear-btn {
+            background: #f44336;
+            color: white;
+        }
+
+        .clear-btn:hover {
+            background: #d32f2f;
+            transform: translateY(-2px);
+        }
+
+        .results {
+            margin-top: 30px;
+            display: none;
+        }
+
+        .results.show {
+            display: block;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-card.warning {
+            background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+        }
+
+        .stat-card.error {
+            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+        }
+
+        .stat-card.success {
+            background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
+        }
+
+        .stat-card.info {
+            background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+        }
+
+        .stat-card h3 {
+            font-size: 36px;
+            margin-bottom: 5px;
+        }
+
+        .stat-card p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .results-header h2 {
+            color: #333;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            background: #e0e0e0;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .filter-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .url-list {
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .url-item {
+            background: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.2s;
+        }
+
+        .url-item:hover {
+            transform: translateX(5px);
+        }
+
+        .url-item.high-duplicate {
+            border-left-color: #f44336;
+            background: #ffebee;
+        }
+
+        .url-item.medium-duplicate {
+            border-left-color: #ff9800;
+            background: #fff3e0;
+        }
+
+        .url-item.low-duplicate {
+            border-left-color: #4caf50;
+            background: #e8f5e9;
+        }
+
+        .url-item.missing {
+            border-left-color: #f44336;
+            background: #ffebee;
+        }
+
+        .url-item.justified {
+            border-left-color: #9e9e9e;
+            background: #f5f5f5;
+        }
+
+        .url-item.extra {
+            border-left-color: #2196f3;
+            background: #e3f2fd;
+        }
+
+        .url-text {
+            flex: 1;
+            word-break: break-all;
+            margin-right: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+
+        .url-count {
+            background: #667eea;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            min-width: 100px;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        .high-duplicate .url-count {
+            background: #f44336;
+        }
+
+        .medium-duplicate .url-count {
+            background: #ff9800;
+        }
+
+        .low-duplicate .url-count {
+            background: #4caf50;
+        }
+
+        .missing .url-count {
+            background: #f44336;
+        }
+
+        .justified .url-count {
+            background: #9e9e9e;
+        }
+
+        .extra .url-count {
+            background: #2196f3;
+        }
+
+        .search-box {
+            margin-bottom: 20px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            font-size: 18px;
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .comparison-grid.three-col {
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+
+        .block-section {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .block-section h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .block-section.block-c h3 {
+            color: #9e9e9e;
+        }
+
+        .comparison-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f0f0f0;
+            border-radius: 10px;
+        }
+
+        .comparison-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+
+        @media (max-width: 1024px) {
+            .comparison-grid.three-col {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 URL Duplicate Checker & Comparator</h1>
+            <p>Analyze duplicates or compare two sets of URLs</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('duplicate')">Duplicate Checker</button>
+            <button class="tab" onclick="switchTab('compare')">URL Comparator</button>
+        </div>
+        
+        <!-- Duplicate Checker Tab -->
+        <div class="tab-content active" id="duplicateTab">
+            <div class="input-section">
+                <label for="urlInput">Paste Your URLs Here (one per line):</label>
+                <textarea id="urlInput" placeholder="https://example.com/&#10;https://example2.com/&#10;https://example.com/&#10;..."></textarea>
+                <div class="button-group">
+                    <button class="analyze-btn" onclick="analyzeURLs()">Analyze URLs</button>
+                    <button class="clear-btn" onclick="clearDuplicate()">Clear</button>
+                </div>
+            </div>
+
+            <div class="results" id="duplicateResults">
+                <div class="stats">
+                    <div class="stat-card">
+                        <h3 id="totalURLs">0</h3>
+                        <p>Total URLs</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="uniqueURLs">0</h3>
+                        <p>Unique URLs</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="duplicateURLs">0</h3>
+                        <p>Duplicate URLs</p>
+                    </div>
+                </div>
+
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Search for a specific URL..." oninput="filterURLs()">
+                </div>
+
+                <div class="results-header">
+                    <h2>Results</h2>
+                    <div class="filter-buttons">
+                        <button class="filter-btn active" onclick="setFilter('all')">All</button>
+                        <button class="filter-btn" onclick="setFilter('duplicates')">Duplicates Only</button>
+                        <button class="filter-btn" onclick="setFilter('high')">High (5+)</button>
+                    </div>
+                </div>
+
+                <div class="url-list" id="urlList"></div>
+            </div>
+        </div>
+
+        <!-- Comparator Tab -->
+        <div class="tab-content" id="compareTab">
+            <div class="comparison-grid three-col">
+                <div class="block-section">
+                    <h3>📋 Block A - Source URLs</h3>
+                    <p class="helper-text">Complete list of all URLs</p>
+                    <textarea id="blockA" class="small" placeholder="Paste all URLs from Block A here..."></textarea>
+                </div>
+                <div class="block-section">
+                    <h3>📋 Block B - Target URLs</h3>
+                    <p class="helper-text">Should contain all URLs from A (only once each)</p>
+                    <textarea id="blockB" class="small" placeholder="Paste URLs from Block B here..."></textarea>
+                </div>
+                <div class="block-section block-c">
+                    <h3>🚫 Block C - Not Working URLs</h3>
+                    <p class="helper-text">URLs that are not working (can be skipped in B)</p>
+                    <textarea id="blockC" class="small" placeholder="Paste non-working URLs here..."></textarea>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button class="compare-btn" onclick="compareURLs()">Compare URLs</button>
+                <button class="clear-btn" onclick="clearCompare()">Clear</button>
+            </div>
+
+            <div class="results" id="compareResults">
+                <div class="stats">
+                    <div class="stat-card">
+                        <h3 id="blockACount">0</h3>
+                        <p>URLs in Block A</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="blockBCount">0</h3>
+                        <p>URLs in Block B</p>
+                    </div>
+                    <div class="stat-card info">
+                        <h3 id="blockCCount">0</h3>
+                        <p>Not Working (Block C)</p>
+                    </div>
+                    <div class="stat-card success">
+                        <h3 id="matchCount">0</h3>
+                        <p>Perfect Matches</p>
+                    </div>
+                    <div class="stat-card error">
+                        <h3 id="missingCount">0</h3>
+                        <p>Missing (Not Justified)</p>
+                    </div>
+                    <div class="stat-card warning">
+                        <h3 id="multipleCount">0</h3>
+                        <p>Duplicates in B</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="justifiedCount">0</h3>
+                        <p>Justified Missing</p>
+                    </div>
+                    <div class="stat-card info">
+                        <h3 id="extraCount">0</h3>
+                        <p>Extra in B</p>
+                    </div>
+                </div>
+
+                <div class="comparison-section" id="missingSection" style="display:none;">
+                    <h3>❌ CRITICAL: URLs Missing in Block B (Should be there!)</h3>
+                    <p style="color: #f44336; margin-bottom: 15px;">These URLs are in Block A but missing in Block B, and they're NOT in the not-working list!</p>
+                    <div class="url-list" id="missingList"></div>
+                </div>
+
+                <div class="comparison-section" id="multipleSection" style="display:none;">
+                    <h3>⚠️ WARNING: URLs appearing Multiple Times in Block B</h3>
+                    <p style="color: #ff9800; margin-bottom: 15px;">These URLs should appear only once in Block B but they appear multiple times!</p>
+                    <div class="url-list" id="multipleList"></div>
+                </div>
+
+                <div class="comparison-section" id="justifiedSection" style="display:none;">
+                    <h3>✓ Justified Missing URLs (In Block C - Not Working)</h3>
+                    <p style="color: #666; margin-bottom: 15px;">These URLs are missing from Block B but that's okay because they're not working.</p>
+                    <div class="url-list" id="justifiedList"></div>
+                </div>
+
+                <div class="comparison-section" id="extraSection" style="display:none;">
+                    <h3>➕ Extra URLs in Block B (Not in Block A)</h3>
+                    <p style="color: #2196f3; margin-bottom: 15px;">These URLs are in Block B but were never in Block A.</p>
+                    <div class="url-list" id="extraList"></div>
+                </div>
+
+                <div class="comparison-section" id="perfectSection" style="display:none;">
+                    <h3>✅ Perfect Matches (Exactly once in both A and B)</h3>
+                    <p style="color: #4caf50; margin-bottom: 15px;">These URLs appear exactly once in both Block A and Block B - Perfect!</p>
+                    <div class="url-list" id="perfectList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let urlData = [];
+        let currentFilter = 'all';
+        let totalCount = 0;
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            if (tabName === 'duplicate') {
+                document.querySelectorAll('.tab')[0].classList.add('active');
+                document.getElementById('duplicateTab').classList.add('active');
+            } else {
+                document.querySelectorAll('.tab')[1].classList.add('active');
+                document.getElementById('compareTab').classList.add('active');
+            }
+        }
+
+        function analyzeURLs() {
+            const input = document.getElementById('urlInput').value;
+            
+            const lines = input.split('\n');
+            const urls = [];
+            
+            lines.forEach(line => {
+                const trimmedLine = line.trim();
+                if (trimmedLine.length > 0) {
+                    urls.push(trimmedLine);
+                }
+            });
+
+            if (urls.length === 0) {
+                alert('Please paste some URLs first!');
+                return;
+            }
+
+            const urlCount = {};
+            urls.forEach(url => {
+                urlCount[url] = (urlCount[url] || 0) + 1;
+            });
+
+            urlData = Object.entries(urlCount)
+                .map(([url, count]) => ({ url, count }))
+                .sort((a, b) => b.count - a.count);
+
+            totalCount = urls.length;
+            const uniqueURLs = Object.keys(urlCount).length;
+            const duplicateURLs = urlData.filter(item => item.count > 1).length;
+
+            document.getElementById('totalURLs').textContent = totalCount;
+            document.getElementById('uniqueURLs').textContent = uniqueURLs;
+            document.getElementById('duplicateURLs').textContent = duplicateURLs;
+
+            document.getElementById('duplicateResults').classList.add('show');
+            displayURLs();
+        }
+
+        function displayURLs() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            let filteredData = urlData.filter(item => {
+                const matchesSearch = item.url.toLowerCase().includes(searchTerm);
+                
+                if (currentFilter === 'all') return matchesSearch;
+                if (currentFilter === 'duplicates') return item.count > 1 && matchesSearch;
+                if (currentFilter === 'high') return item.count >= 5 && matchesSearch;
+                
+                return matchesSearch;
+            });
+
+            const urlList = document.getElementById('urlList');
+            
+            if (filteredData.length === 0) {
+                urlList.innerHTML = '<div class="no-results">No URLs found matching your criteria</div>';
+                return;
+            }
+
+            urlList.innerHTML = filteredData.map(item => {
+                let className = '';
+                if (item.count >= 5) className = 'high-duplicate';
+                else if (item.count >= 3) className = 'medium-duplicate';
+                else if (item.count === 2) className = 'low-duplicate';
+
+                return `
+                    <div class="url-item ${className}">
+                        <div class="url-text">${item.url}</div>
+                        <div class="url-count">${item.count} ${item.count === 1 ? 'time' : 'times'}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function setFilter(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            displayURLs();
+        }
+
+        function filterURLs() {
+            displayURLs();
+        }
+
+        function clearDuplicate() {
+            document.getElementById('urlInput').value = '';
+            document.getElementById('searchInput').value = '';
+            document.getElementById('duplicateResults').classList.remove('show');
+            urlData = [];
+            currentFilter = 'all';
+            totalCount = 0;
+        }
+
+        function compareURLs() {
+            const blockAInput = document.getElementById('blockA').value;
+            const blockBInput = document.getElementById('blockB').value;
+            const blockCInput = document.getElementById('blockC').value;
+
+            if (!blockAInput.trim() || !blockBInput.trim()) {
+                alert('Please paste URLs in both Block A and Block B!');
+                return;
+            }
+
+            // Parse Block A
+            const blockALines = blockAInput.split('\n');
+            const blockAURLs = [];
+            blockALines.forEach(line => {
+                const trimmedLine = line.trim();
+                if (trimmedLine.length > 0) {
+                    blockAURLs.push(trimmedLine);
+                }
+            });
+
+            // Parse Block B
+            const blockBLines = blockBInput.split('\n');
+            const blockBURLs = [];
+            blockBLines.forEach(line => {
+                const trimmedLine = line.trim();
+                if (trimmedLine.length > 0) {
+                    blockBURLs.push(trimmedLine);
+                }
+            });
+
+            // Parse Block C (not working URLs)
+            const blockCLines = blockCInput.split('\n');
+            const blockCURLs = new Set();
+            blockCLines.forEach(line => {
+                const trimmedLine = line.trim();
+                if (trimmedLine.length > 0) {
+                    blockCURLs.add(trimmedLine);
+                }
+            });
+
+            // Get unique URLs from Block A
+            const blockAUnique = new Set(blockAURLs);
+
+            // Count occurrences in Block B
+            const blockBCount = {};
+            blockBURLs.forEach(url => {
+                blockBCount[url] = (blockBCount[url] || 0) + 1;
+            });
+
+            // Analysis
+            const missing = [];           // In A, not in B, NOT in C (ERROR!)
+            const justified = [];         // In A, not in B, but IN C (OK - not working)
+            const multiple = [];          // In both, but B has duplicates
+            const perfect = [];           // In both, exactly once
+            const extra = [];             // In B but not in A
+
+            // Check each unique URL in A
+            blockAUnique.forEach(url => {
+                if (!blockBCount[url]) {
+                    // URL is missing from B
+                    if (blockCURLs.has(url)) {
+                        // It's in the not-working list, so it's justified
+                        justified.push({ url, status: 'Not Working' });
+                    } else {
+                        // It's NOT in the not-working list, so it's an error
+                        missing.push({ url, status: 'MISSING!' });
+                    }
+                } else if (blockBCount[url] === 1) {
+                    // Perfect - appears exactly once in B
+                    perfect.push({ url, countB: 1 });
+                } else {
+                    // Appears multiple times in B (should only be once)
+                    multiple.push({ url, countB: blockBCount[url] });
+                }
+            });
+
+            // Check for URLs in B that aren't in A
+            Object.keys(blockBCount).forEach(url => {
+                if (!blockAUnique.has(url)) {
+                    extra.push({ url, countB: blockBCount[url] });
+                }
+            });
+
+            // Update statistics
+            document.getElementById('blockACount').textContent = blockAURLs.length;
+            document.getElementById('blockBCount').textContent = blockBURLs.length;
+            document.getElementById('blockCCount').textContent = blockCURLs.size;
+            document.getElementById('matchCount').textContent = perfect.length;
+            document.getElementById('missingCount').textContent = missing.length;
+            document.getElementById('multipleCount').textContent = multiple.length;
+            document.getElementById('justifiedCount').textContent = justified.length;
+            document.getElementById('extraCount').textContent = extra.length;
+
+            // Display results
+            displayComparisonResults('missingList', 'missingSection', missing, 'missing', 'MISSING');
+            displayComparisonResults('multipleList', 'multipleSection', multiple, 'medium-duplicate', 'Times in B');
+            displayComparisonResults('justifiedList', 'justifiedSection', justified, 'justified', 'Not Working');
+            displayComparisonResults('extraList', 'extraSection', extra, 'extra', 'Times in B');
+            displayComparisonResults('perfectList', 'perfectSection', perfect, 'low-duplicate', 'Perfect');
+
+            document.getElementById('compareResults').classList.add('show');
+        }
+
+        function displayComparisonResults(listId, sectionId, data, className, labelText) {
+            const section = document.getElementById(sectionId);
+            const list = document.getElementById(listId);
+
+            if (data.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+
+            section.style.display = 'block';
+            list.innerHTML = data.map(item => {
+                let countText = '';
+                if (item.countB !== undefined) {
+                    countText = item.countB > 1 ? `${item.countB} times` : labelText;
+                } else if (item.status) {
+                    countText = item.status;
+                } else {
+                    countText = labelText;
+                }
+
+                return `
+                    <div class="url-item ${className}">
+                        <div class="url-text">${item.url}</div>
+                        <div class="url-count">${countText}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function clearCompare() {
+            document.getElementById('blockA').value = '';
+            document.getElementById('blockB').value = '';
+            document.getElementById('blockC').value = '';
+            document.getElementById('compareResults').classList.remove('show');
+        }
+    </script>
+</body>
+</html>
